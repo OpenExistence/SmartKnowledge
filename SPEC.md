@@ -17,17 +17,55 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 │           SQLite (Métadonnées)          │
 │  - Audio/Transcript                     │
 │  - Date, Nom, Sensibilité              │
+│  - Utilisateur (propriétaire)           │
 │  - JSON Métadonnées                     │
 └─────────────────────────────────────────┘
 ```
 
+## Charte Graphique
+
+### Atos Brand (Bleu)
+
+**Couleurs Primaires:**
+- Bleu Atos: `#005D6E` (principal)
+- Bleu Atos Light: `#00A3A3`
+- Bleu Foncé: `#003844`
+
+**Couleurs Secondaires:**
+- Blanc: `#FFFFFF`
+- Gris Clair: `#F5F5F5`
+- Gris: `#666666`
+- Noir: `#1A1A1A`
+
+**Accent:**
+- Orange: `#FF6B35` (pour les actions importantes)
+
+**Typographie:**
+- Font: Arial (system) ou font corporate Atos
+
+### Logo
+- Logo Atos à intégrer dans le header
+
+---
+
 ## Base de Données Relationnelle (SQLite)
+
+### Table: `utilisateurs`
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | INTEGER PRIMARY KEY | ID unique |
+| `username` | TEXT UNIQUE | Nom d'utilisateur |
+| `password_hash` | TEXT | Hash du mot de passe |
+| `role` | TEXT | `user` ou `admin` |
+| `created_at` | DATETIME | Date de création |
 
 ### Table: `entretiens`
 
 | Champ | Type | Description |
 |-------|------|-------------|
 | `id` | INTEGER PRIMARY KEY | ID unique |
+| `utilisateur_id` | INTEGER | Propriétaire (FK utilisateurs) |
 | `expert_nom` | TEXT | Nom de l'expert |
 | `expert_fonction` | TEXT | Fonction/titre de l'expert |
 | `domaine` | TEXT | Domaine (spatial, militaire, énergie, etc.) |
@@ -36,6 +74,9 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 | `chemin_fichier` | TEXT | Chemin vers l'audio ou la transcription |
 | `duree_secondes` | INTEGER | Durée de l'enregistrement |
 | `sensibilite` | TEXT | Niveau de sensibilité (voir ci-dessous) |
+| `statut_audio` | INTEGER | 0 = non, 1 = oui |
+| `statut_transcription` | INTEGER | 0 = non, 1 = oui |
+| `statut_vectorisation` | INTEGER | 0 = non, 1 = oui |
 | `statut` | TEXT | `en_attente`, `transcrit`, `vectorisé` |
 | `metadata_json` | TEXT | JSON avec métadonnées additionnelles |
 | `created_at` | DATETIME | Date de création de l'enregistrement |
@@ -64,6 +105,8 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 }
 ```
 
+---
+
 ## Base de Données Vectorielle
 
 ### Choix Technique
@@ -76,7 +119,7 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 |-------|-------------|
 | `id` | ID unique (référence vers entretien SQLite) |
 | `texte` | Transcription segmentée |
-| `metadata` | Métadonnées (expert, domaine, date, sensibilité) |
+| `metadata` | Métadonnées (expert, domaine, date, sensibilité, utilisateur_id) |
 | `embedding` | Vecteur (dimension selon modèle d'embedding) |
 
 ### Modèles d'Embedding
@@ -84,106 +127,161 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 - **Option légère** : `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions)
 - **Option performante** : `sentence-transformers/all-mpnet-base-v2` (768 dimensions)
 
+---
+
+## Interface Web (Frontend)
+
+### Technologies
+- **Framework**: Vanilla JS ou框架 léger (Vue.js, React)
+- **Style**: CSS avec charte Atos (bleu)
+- **Backend API**: Python (Flask/FastAPI)
+
+### Pages/Vues
+
+#### 1. Page de Connexion (`/login`)
+- Formulaire: identifiant + mot de passe
+- Bouton "Se connecter"
+- Lien "Mot de passe oublié" (optionnel)
+
+#### 2. Tableau de Bord (`/dashboard`)
+- Welcome message avec le nom de l'utilisateur
+- Navigation principale (onglets)
+- Accès rapide aux dernières actions
+
+#### 3. Onglet: Nouvel Entretien (`/new`)
+Trois options:
+
+**a) Enregistrement Live**
+- Bouton "Démarrer l'enregistrement"
+- Bouton "Arrêter l'enregistrement"
+- Visualisation du temps écoulé
+- Prévisualisation audio
+- Formulaire: expert nom, fonction, domaine, sensibilité
+- Bouton "Sauvegarder"
+
+**b) Déposer un Audio**
+- Upload de fichier audio (mp3, wav, m4a)
+- Barre de progression
+- Formulaire: expert nom, fonction, domaine, sensibilité
+- Bouton "Sauvegarder"
+
+**c) Déposer une Transcription**
+- Zone de texte pour coller la transcription
+- Upload optionnel d'un fichier texte
+- Formulaire: expert nom, fonction, domaine, sensibilité
+- Bouton "Sauvegarder"
+
+#### 4. Onglet: Gestion des Entretiens (`/manage`)
+- Tableau/liste des entretiens
+- Filtres: par date, domaine, expert, sensibilité, statut
+- Colonnes:
+  - Expert | Domaine | Date | Audio | Transcription | Vectorisé
+- Actions par entretien:
+  - 🔊 Audio → Transcription (lancer transcription Whisper)
+  - 📝 Transcription → Audio (TTS - optionnel)
+  - 🗑️ Supprimer
+  - ✏️ Éditer
+- Indicateurs visuels (✅ / ❌ / ⏳)
+
+#### 5. Onglet: Base de Connaissances (`/chat`)
+- Interface de chat style conversation
+- Zone de saisie de question
+- Affichage des réponses avec:
+  - Texte de la réponse
+  - Citations des sources (expert, date, extrait)
+- Optionnel: selector de domaine/expert pour filtrer les sources
+
+### Composants UI
+
+- **Header**: Logo Atos, nom du projet, utilisateur connecté, déconnexion
+- **Sidebar/Nav**: Navigation entre les onglets
+- **Cards**: Présentation des entretiens
+- **Modal**: Confirmations, formulaires détaillés
+- **Toast**: Notifications (succès, erreur)
+
+---
+
 ## Pipeline de Traitement
 
 ### Étape 1: Importation
 
-1. Création de l'entretien dans SQLite
-2. Stockage de l'audio dans `data/audio/`
-3. Génération du fichier JSON de métadonnées
+1. Authentification de l'utilisateur
+2. Création de l'entretien dans SQLite (associé à utilisateur_id)
+3. Stockage de l'audio dans `data/audio/{utilisateur_id}/`
+4. Stockage de la transcription dans `data/transcriptions/{utilisateur_id}/`
+5. Génération du fichier JSON de métadonnées
 
 ### Étape 2: Transcription
 
-1. Utilisation de **Whisper** (OpenAI) pour la transcription
-2. Segmentation du texte par speaker (si possible)
-3. Mise à jour du statut dans SQLite
-4. Stockage de la transcription dans `data/transcriptions/`
+1. Script Whisper (Python)
+2. Traitement de l'audio
+3. Segmentation du texte par speaker (si possible)
+4. Mise à jour du statut dans SQLite
+5. Stockage de la transcription
 
 ### Étape 3: Vectorisation
 
 1. Chargement de la transcription
-2. Segmentation en chunks (paragraphes ou sentences)
+2. Segmentation en chunks
 3. Génération des embeddings
-4. Insertion dans la base vectorielle avec métadonnées
+4. Insertion dans la base vectorielle avec métadonnées (incluant utilisateur_id)
 5. Mise à jour du statut dans SQLite
 
-## Interface de Requête (RAG)
-
-### Flux
-
-1. Question utilisateur en langage naturel
-2. Génération de l'embedding de la question
-3. Recherche dans la base vectorielle (top-k résultats)
-4. Construction du contexte (chunks + métadonnées)
-5. Interrogation du LLM avec le contexte
-6. Retour de la réponse + citations
-
-### Modèles LLM Supportés
-
-- Ollama (local)
-- OpenAI (API)
-- Anthropic (API)
-
-## Fonctionnalités Principales
-
-### 1. Entretiens Guidés
-- Interface de conduite d'entretiens avec des experts
-- Questions pré-définies par domaine (spatial, militaire, énergie, etc.)
-- Possibilité de personnaliser les guides d'entretien
-- Enregistrement audio des sessions
-
-### 2. Transcription
-- Transcription automatique de l'audio via **Whisper** (Python)
-- Identification du speaker (expert vs interviewer) - optionnel
-- Validation/relecture humaine avant vectorisation
-
-### 3. Base de Connaissances Vectorielle
-- Embedding des transcriptions
-- Stockage dans une base de données vectorielle
-- Indexation par domaine, expert, date, thématiques, sensibilité
-
-### 4. Interrogation via LLM
-- Interface de requête en langage naturel
-- Le LLM interroge la base vectorielle pour générer des réponses
-- Citations des sources (expert, date, contexte)
-
-## Domaines Cibles
-
-- Spatial
-- Militaire
-- Énergie
-- (À compléter)
+---
 
 ## Structure des Fichiers
 
 ```
 SmartKnowledge/
-├── data/
-│   ├── audio/              # Fichiers audio bruts
-│   ├── transcriptions/    # Fichiers texte transcrits
-│   └── db/
-│       ├── smartknowledge.sqlite  # Base SQLite
-│       └── vectors/       # Base vectorielle (ChromaDB)
-├── src/
-│   ├── cli.py             # Interface CLI
-│   ├── db/
-│   │   ├── sqlite.py      # Gestion SQLite
-│   │   └── vector.py      # Gestion base vectorielle
-│   ├── transcription/
-│   │   └── whisper.py     # Script transcription
-│   └── rag/
-│       └── query.py       # Module RAG
-├── guides/                # Guides d'entretien par domaine
+├── backend/
+│   ├── app.py                 # API Flask/FastAPI
+│   ├── config.py              # Configuration
+│   ├── requirements.txt       # Dépendances Python
+│   ├── src/
+│   │   ├── db/
+│   │   │   ├── sqlite.py      # Gestion SQLite
+│   │   │   └── vector.py     # Gestion base vectorielle
+│   │   ├── auth/
+│   │   │   └── auth.py       # Authentification
+│   │   ├── transcription/
+│   │   │   └── whisper.py    # Script transcription
+│   │   └── rag/
+│   │       └── query.py      # Module RAG
+│   └── data/
+│       ├── audio/
+│       │   └── {utilisateur_id}/
+│       ├── transcriptions/
+│       │   └── {utilisateur_id}/
+│       └── db/
+│           ├── smartknowledge.sqlite
+│           └── vectors/
+├── frontend/
+│   ├── index.html
+│   ├── login.html
+│   ├── css/
+│   │   └── style.css         # Charte Atos
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── auth.js
+│   │   ├── api.js
+│   │   └── components/
+│   └── assets/
+│       └── logo-atos.png
+├── guides/                    # Guides d'entretien par domaine
 ├── SPEC.md
 └── README.md
 ```
 
+---
+
 ## Prochaines Étapes
 
-- [ ] Valider la stack technique
-- [ ] Initialiser le projet Python
-- [ ] Implémenter la base SQLite
+- [ ] Initialiser le projet Python (backend)
+- [ ] Créer la base SQLite avec gestion utilisateurs
+- [ ] Implémenter l'authentification
 - [ ] Implémenter le script de transcription Whisper
 - [ ] Implémenter la base vectorielle
 - [ ] Implémenter le pipeline RAG
-- [ ] Créer l'interface CLI
+- [ ] Créer l'API REST
+- [ ] Développer le frontend (charte Atos)
+- [ ] Créer le compte root (root/root)
