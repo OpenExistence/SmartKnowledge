@@ -52,7 +52,7 @@ class ApiClient {
             body: JSON.stringify({ username, password })
         });
         if (data) {
-            this.token = data.user.id;
+            this.token = data.token;
             localStorage.setItem('token', this.token);
             localStorage.setItem('user', JSON.stringify(data.user));
         }

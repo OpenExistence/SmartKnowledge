@@ -1,9 +1,17 @@
-"""Authentication utilities."""
+"""Authentication utilities with token support."""
 import bcrypt
+import secrets
+from datetime import datetime, timedelta
+from functools import wraps
+from flask import request, jsonify, g
 from flask_login import LoginManager, UserMixin
 from src.db.models import Utilisateur
 
 login_manager = LoginManager()
+
+# In-memory token storage (use Redis for production)
+# token -> {"user_id": int, "created_at": datetime}
+api_tokens = {}
 
 
 def init_auth(app):
@@ -50,3 +58,61 @@ def authenticate_user(username: str, password: str) -> Utilisateur | None:
     if user and verify_password(password, user.password_hash):
         return user
     return None
+
+
+def generate_token(user_id: int) -> str:
+    """Generate an API token for a user."""
+    token = secrets.token_urlsafe(32)
+    api_tokens[token] = {
+        "user_id": user_id,
+        "created_at": datetime.utcnow()
+    }
+    return token
+
+
+def validate_token(token: str) -> int | None:
+    """Validate an API token and return user_id."""
+    if token in api_tokens:
+        token_data = api_tokens[token]
+        # Check if token is less than 7 days old
+        if datetime.utcnow() - token_data["created_at"] < timedelta(days=7):
+            return token_data["user_id"]
+        else:
+            # Token expired, remove it
+            del api_tokens[token]
+    return None
+
+
+def token_required(f):
+    """Decorator for API routes that require authentication via token."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]  # Remove 'Bearer ' prefix
+        
+        if not token:
+            return jsonify({"error": "Token is missing"}), 401
+        
+        user_id = validate_token(token)
+        if not user_id:
+            return jsonify({"error": "Invalid or expired token"}), 401
+        
+        # Load user and set in g
+        user = Utilisateur.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 401
+        
+        g.user = user
+        g.current_user = User(user)
+        
+        return f(*args, **kwargs)
+    
+    return decorated
+
+
+# Alias for compatibility
+login_required = token_required
+current_user = lambda: getattr(g, 'current_user', None)

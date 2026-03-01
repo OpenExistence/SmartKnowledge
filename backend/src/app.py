@@ -1,7 +1,8 @@
 """Main Flask application."""
 import os
 from pathlib import Path
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, send_from_directory, g
+from flask_login import login_user, logout_user, current_user
 from flask_cors import CORS
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -9,7 +10,7 @@ from werkzeug.utils import secure_filename
 import src.config as config
 from src.db.models import db, Utilisateur, Entretien
 from src.db import init_db
-from src.auth.auth import init_auth, authenticate_user, User
+from src.auth.auth import init_auth, authenticate_user, User, generate_token, token_required
 from src.auth.users import register_user_routes
 
 
@@ -44,6 +45,15 @@ def register_routes(app):
         """Health check."""
         return jsonify({"status": "ok"})
 
+    # Serve frontend static files
+    @app.route("/")
+    def serve_index():
+        return send_from_directory("../../frontend", "index.html")
+
+    @app.route("/<path:filename>")
+    def serve_static(filename):
+        return send_from_directory("../../frontend", filename)
+
     # Auth routes
     @app.route("/api/auth/login", methods=["POST"])
     def login():
@@ -61,38 +71,46 @@ def register_routes(app):
 
         user_obj = User(user)
         login_user(user_obj)
-        return jsonify({"message": "Login successful", "user": user.to_dict()})
+        
+        # Generate API token
+        token = generate_token(user.id)
+        
+        return jsonify({
+            "message": "Login successful", 
+            "user": user.to_dict(),
+            "token": token
+        })
 
     @app.route("/api/auth/logout", methods=["POST"])
-    @login_required
+    @token_required
     def logout():
         """Logout endpoint."""
         logout_user()
         return jsonify({"message": "Logout successful"})
 
     @app.route("/api/auth/me", methods=["GET"])
-    @login_required
+    @token_required
     def me():
         """Get current user."""
-        return jsonify({"user": current_user.utilisateur.to_dict()})
+        return jsonify({"user": g.current_user.utilisateur.to_dict()})
 
     # Entretien routes
     @app.route("/api/entretiens", methods=["GET"])
-    @login_required
+    @token_required
     def list_entretiens():
         """List all entretiens for current user."""
         entretiens = Entretien.query.filter_by(
-            utilisateur_id=current_user.id
+            utilisateur_id=g.current_user.id
         ).order_by(Entretien.created_at.desc()).all()
         return jsonify({"entretiens": [e.to_dict() for e in entretiens]})
 
     @app.route("/api/entretiens/<int:entretien_id>", methods=["GET"])
-    @login_required
+    @token_required
     def get_entretien(entretien_id):
         """Get a single entretien."""
         entretien = Entretien.query.filter_by(
             id=entretien_id,
-            utilisateur_id=current_user.id
+            utilisateur_id=g.current_user.id
         ).first()
 
         if not entretien:
@@ -101,7 +119,7 @@ def register_routes(app):
         return jsonify({"entretien": entretien.to_dict()})
 
     @app.route("/api/entretiens", methods=["POST"])
-    @login_required
+    @token_required
     def create_entretien():
         """Create a new entretien."""
         # Handle file upload or text data
@@ -128,7 +146,7 @@ def register_routes(app):
                 return jsonify({"error": "Invalid audio file type"}), 400
 
             # Save file
-            user_dir = config.AUDIO_DIR / str(current_user.id)
+            user_dir = config.AUDIO_DIR / str(g.current_user.id)
             user_dir.mkdir(parents=True, exist_ok=True)
             filepath = user_dir / filename
             fichier.save(filepath)
@@ -140,7 +158,7 @@ def register_routes(app):
         transcription = request.form.get("transcription") or (request.json or {}).get("transcription")
         if transcription:
             type_fichier = "transcription"
-            user_dir = config.TRANSCRIPTIONS_DIR / str(current_user.id)
+            user_dir = config.TRANSCRIPTIONS_DIR / str(g.current_user.id)
             user_dir.mkdir(parents=True, exist_ok=True)
             filename = f"{expert_nom}_{len(list(user_dir.glob('*')))}.txt"
             filepath = user_dir / filename
@@ -149,7 +167,7 @@ def register_routes(app):
 
         # Create entretien
         entretien = Entretien(
-            utilisateur_id=current_user.id,
+            utilisateur_id=g.current_user.id,
             expert_nom=expert_nom,
             expert_fonction=expert_fonction,
             domaine=domaine,
@@ -169,12 +187,12 @@ def register_routes(app):
         return jsonify({"message": "Entretien created", "entretien": entretien.to_dict()}), 201
 
     @app.route("/api/entretiens/<int:entretien_id>", methods=["DELETE"])
-    @login_required
+    @token_required
     def delete_entretien(entretien_id):
         """Delete an entretien."""
         entretien = Entretien.query.filter_by(
             id=entretien_id,
-            utilisateur_id=current_user.id
+            utilisateur_id=g.current_user.id
         ).first()
 
         if not entretien:
@@ -190,14 +208,14 @@ def register_routes(app):
         return jsonify({"message": "Entretien deleted"})
 
     @app.route("/api/entretiens/<int:entretien_id>/transcrire", methods=["POST"])
-    @login_required
+    @token_required
     def transcrire_entretien(entretien_id):
         """Transcribe an audio file using Faster Whisper."""
         from src.transcription.whisper_transcribe import transcribe_and_save, FASTER_WHISPER_AVAILABLE
 
         entretien = Entretien.query.filter_by(
             id=entretien_id,
-            utilisateur_id=current_user.id
+            utilisateur_id=g.current_user.id
         ).first()
 
         if not entretien:
@@ -213,7 +231,7 @@ def register_routes(app):
 
         # Run transcription
         try:
-            output_dir = str(config.TRANSCRIPTIONS_DIR / str(current_user.id))
+            output_dir = str(config.TRANSCRIPTIONS_DIR / str(g.current_user.id))
             result = transcribe_and_save(enttien.chemin_fichier, output_dir)
 
             if "error" in result:
@@ -235,14 +253,14 @@ def register_routes(app):
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/entretiens/<int:entretien_id>/vectoriser", methods=["POST"])
-    @login_required
+    @token_required
     def vectoriser_entretien(entretien_id):
         """Vectorize a transcription."""
         from src.db.vector import VectorStore, CHROMA_AVAILABLE, SENTENCE_TRANSFORMERS_AVAILABLE
 
         entretien = Entretien.query.filter_by(
             id=entretien_id,
-            utilisateur_id=current_user.id
+            utilisateur_id=g.current_user.id
         ).first()
 
         if not entretien:
@@ -296,7 +314,7 @@ def register_routes(app):
 
     # RAG Query endpoint
     @app.route("/api/query", methods=["POST"])
-    @login_required
+    @token_required
     def query_knowledge():
         """Query the knowledge base."""
         from src.db.vector import VectorStore, CHROMA_AVAILABLE, SENTENCE_TRANSFORMERS_AVAILABLE
@@ -324,7 +342,7 @@ def register_routes(app):
             # Execute query
             result = rag.query(
                 question=question,
-                user_id=current_user.id,
+                user_id=g.current_user.id,
                 domaine=data.get("domaine"),
                 sensibilite_max=data.get("sensibilite_max", "tres_secret")
             )
