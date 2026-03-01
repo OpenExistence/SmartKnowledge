@@ -132,72 +132,73 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 ## Interface Web (Frontend)
 
 ### Technologies
-- **Framework**: Vanilla JS ou框架 léger (Vue.js, React)
+- **Framework**: Vanilla JS
 - **Style**: CSS avec charte Atos (bleu)
-- **Backend API**: Python (Flask/FastAPI)
+- **Backend API**: Python (Flask)
 
 ### Pages/Vues
 
 #### 1. Page de Connexion (`/login`)
-- Formulaire: identifiant + mot de passe
-- Bouton "Se connecter"
-- Lien "Mot de passe oublié" (optionnel)
+- ✅ Formulaire: identifiant + mot de passe
+- ✅ Authentification par token API
+- ✅ Compte root: root/root
 
 #### 2. Tableau de Bord (`/dashboard`)
-- Welcome message avec le nom de l'utilisateur
-- Navigation principale (onglets)
-- Accès rapide aux dernières actions
+- ✅ Welcome message avec le nom de l'utilisateur
+- ✅ Navigation principale (onglets)
+- ✅ Accès rapide aux dernières actions
 
 #### 3. Onglet: Nouvel Entretien (`/new`)
 Trois options:
 
 **a) Enregistrement Live**
-- Bouton "Démarrer l'enregistrement"
-- Bouton "Arrêter l'enregistrement"
-- Visualisation du temps écoulé
-- Prévisualisation audio
-- Formulaire: expert nom, fonction, domaine, sensibilité
-- Bouton "Sauvegarder"
+- ✅ Bouton "Démarrer l'enregistrement"
+- ✅ Bouton "Arrêter l'enregistrement"
+- ✅ Visualisation du temps écoulé
+- ✅ Prévisualisation audio
+- ✅ Formulaire: expert nom, fonction, domaine, sensibilité
+- ✅ Bouton "Sauvegarder"
 
 **b) Déposer un Audio**
-- Upload de fichier audio (mp3, wav, m4a)
-- Barre de progression
-- Formulaire: expert nom, fonction, domaine, sensibilité
-- Bouton "Sauvegarder"
+- ✅ Upload de fichier audio (mp3, wav, m4a, webm)
+- ✅ Barre de progression
+- ✅ Formulaire: expert nom, fonction, domaine, sensibilité
+- ✅ Bouton "Sauvegarder"
 
 **c) Déposer une Transcription**
-- Zone de texte pour coller la transcription
-- Upload optionnel d'un fichier texte
-- Formulaire: expert nom, fonction, domaine, sensibilité
-- Bouton "Sauvegarder"
+- ✅ Zone de texte pour coller la transcription
+- ✅ Upload optionnel d'un fichier texte
+- ✅ Formulaire: expert nom, fonction, domaine, sensibilité
+- ✅ Bouton "Sauvegarder"
 
 #### 4. Onglet: Gestion des Entretiens (`/manage`)
-- Tableau/liste des entretiens
-- Filtres: par date, domaine, expert, sensibilité, statut
-- Colonnes:
+- ✅ Tableau/liste des entretiens
+- ✅ Filtres: par date, domaine, expert, sensibilité, statut
+- ✅ Colonnes:
   - Expert | Domaine | Date | Audio | Transcription | Vectorisé
-- Actions par entretien:
-  - 🔊 Audio → Transcription (lancer transcription Whisper)
-  - 📝 Transcription → Audio (TTS - optionnel)
+- ✅ Actions par entretien:
+  - 🎙️ Audio → Transcription (lancer transcription Whisper)
+  - 🔍 Transcription → Vectorisation (lancer embedding)
   - 🗑️ Supprimer
-  - ✏️ Éditer
-- Indicateurs visuels (✅ / ❌ / ⏳)
+  - ✏️ Éditer (limitée)
+- ✅ Indicateurs visuels avec indicateurs de traitement (✅ / ❌ / ⏳)
 
 #### 5. Onglet: Base de Connaissances (`/chat`)
-- Interface de chat style conversation
-- Zone de saisie de question
-- Affichage des réponses avec:
+- ✅ Interface de chat style conversation
+- ✅ Zone de saisie de question
+- ✅ Affichage des réponses avec:
   - Texte de la réponse
   - Citations des sources (expert, date, extrait)
-- Optionnel: selector de domaine/expert pour filtrer les sources
+- ✅ Filtre par domaine/expert
 
 ### Composants UI
 
-- **Header**: Logo Atos, nom du projet, utilisateur connecté, déconnexion
-- **Sidebar/Nav**: Navigation entre les onglets
-- **Cards**: Présentation des entretiens
-- **Modal**: Confirmations, formulaires détaillés
-- **Toast**: Notifications (succès, erreur)
+- ✅ **Header**: Logo Atos, nom du projet, utilisateur connecté, déconnexion
+- ✅ **Sidebar/Nav**: Navigation entre les onglets
+- ✅ **Cards**: Présentation des entretiens
+- ✅ **Modal**: Confirmations, formulaires détaillés
+- ✅ **Toast**: Notifications (succès, erreur)
+- ✅ **Indicateurs de traitement**: Animation pulsante pendant transcription/vectorisation
 
 ---
 
@@ -205,27 +206,27 @@ Trois options:
 
 ### Étape 1: Importation
 
-1. Authentification de l'utilisateur
-2. Création de l'entretien dans SQLite (associé à utilisateur_id)
-3. Stockage de l'audio dans `data/audio/{utilisateur_id}/`
-4. Stockage de la transcription dans `data/transcriptions/{utilisateur_id}/`
-5. Génération du fichier JSON de métadonnées
+1. ✅ Authentification de l'utilisateur
+2. ✅ Création de l'entretien dans SQLite (associé à utilisateur_id)
+3. ✅ Stockage de l'audio dans `data/audio/{utilisateur_id}/`
+4. ✅ Stockage de la transcription dans `data/transcriptions/{utilisateur_id}/`
+5. ✅ Génération du fichier JSON de métadonnées
 
 ### Étape 2: Transcription
 
-1. Script Whisper (Python)
-2. Traitement de l'audio
-3. Segmentation du texte par speaker (si possible)
-4. Mise à jour du statut dans SQLite
-5. Stockage de la transcription
+1. ✅ Script Whisper (Python) avec support faster-whisper
+2. ✅ Traitement de l'audio
+3. ✅ Segmentation du texte
+4. ✅ Mise à jour du statut dans SQLite
+5. ✅ Stockage de la transcription
 
 ### Étape 3: Vectorisation
 
-1. Chargement de la transcription
-2. Segmentation en chunks
-3. Génération des embeddings
-4. Insertion dans la base vectorielle avec métadonnées (incluant utilisateur_id)
-5. Mise à jour du statut dans SQLite
+1. ✅ Chargement de la transcription
+2. ✅ Segmentation en chunks
+3. ✅ Génération des embeddings (sentence-transformers)
+4. ✅ Insertion dans la base vectorielle avec métadonnées (incluant utilisateur_id)
+5. ✅ Mise à jour du statut dans SQLite
 
 ---
 
@@ -234,18 +235,23 @@ Trois options:
 ```
 SmartKnowledge/
 ├── backend/
-│   ├── app.py                 # API Flask/FastAPI
+│   ├── app.py                 # API Flask
 │   ├── config.py              # Configuration
 │   ├── requirements.txt       # Dépendances Python
 │   ├── src/
 │   │   ├── db/
-│   │   │   ├── sqlite.py      # Gestion SQLite
-│   │   │   └── vector.py     # Gestion base vectorielle
+│   │   │   ├── __init__.py   # Setup SQLAlchemy
+│   │   │   ├── models.py     # Modèles SQLAlchemy
+│   │   │   └── vector.py     # Gestion ChromaDB
 │   │   ├── auth/
-│   │   │   └── auth.py       # Authentification
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py       # Authentification token
+│   │   │   └── users.py      # Gestion utilisateurs
 │   │   ├── transcription/
-│   │   │   └── whisper.py    # Script transcription
+│   │   │   ├── __init__.py
+│   │   │   └── whisper_transcribe.py  # Transcription Whisper
 │   │   └── rag/
+│   │       ├── __init__.py
 │   │       └── query.py      # Module RAG
 │   └── data/
 │       ├── audio/
@@ -256,32 +262,50 @@ SmartKnowledge/
 │           ├── smartknowledge.sqlite
 │           └── vectors/
 ├── frontend/
-│   ├── index.html
-│   ├── login.html
+│   ├── index.html            # Application single-page
 │   ├── css/
-│   │   └── style.css         # Charte Atos
+│   │   └── style.css        # Charte Atos
 │   ├── js/
-│   │   ├── app.js
-│   │   ├── auth.js
-│   │   ├── api.js
+│   │   ├── api.js           # Client API
+│   │   ├── app.js           # Logique UI
 │   │   └── components/
-│   └── assets/
-│       └── logo-atos.png
-├── guides/                    # Guides d'entretien par domaine
+├── guides/                   # Guides d'entretien par domaine
 ├── SPEC.md
-└── README.md
+├── README.md
+├── setup.sh                  # Script d'installation
+└── run.sh                    # Script de lancement
 ```
+
+---
+
+## Authentification
+
+- ✅ Token-based authentication (Bearer token)
+- ✅ Token généré à la connexion
+- ✅ Token stocké dans localStorage
+- ✅ Durée: 7 jours
+
+## Technologies Utilisées
+
+### Backend
+- Flask (Python web framework)
+- SQLAlchemy (ORM)
+- SQLite (base de données relationnelle)
+- ChromaDB (base de données vectorielle)
+- sentence-transformers (embeddings)
+- faster-whisper (transcription)
+
+### Frontend
+- Vanilla JavaScript
+- CSS3 (charte Atos)
+- MediaRecorder API (enregistrement audio)
 
 ---
 
 ## Prochaines Étapes
 
-- [ ] Initialiser le projet Python (backend)
-- [ ] Créer la base SQLite avec gestion utilisateurs
-- [ ] Implémenter l'authentification
-- [ ] Implémenter le script de transcription Whisper
-- [ ] Implémenter la base vectorielle
-- [ ] Implémenter le pipeline RAG
-- [ ] Créer l'API REST
-- [ ] Développer le frontend (charte Atos)
-- [ ] Créer le compte root (root/root)
+- [ ] Améliorer la segmentation par speaker (diarization)
+- [ ] Ajouter l'export PDF des transcriptions
+- [ ] Implémenter le TTS (texte vers audio)
+- [ ] Ajouter des guides d'entretien par domaine
+- [ ] Améliorer le filtrage dans le chat RAG
