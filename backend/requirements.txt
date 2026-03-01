@@ -1,5 +1,7 @@
 # SmartKnowledge - Dependencies
 
+# ==================== CORE (required) ====================
+
 # Web Framework
 flask>=3.0.0
 flask-cors>=4.0.0
@@ -16,7 +18,13 @@ pydub>=0.25.1
 python-dotenv>=1.0.0
 numpy>=1.24.0
 
-# LLM (optional - requires heavy dependencies)
-# ollama>=0.1.0
-# sentence-transformers>=2.2.0
-# openai-whisper>=20231117
+# ==================== OPTIONAL (for full features) ====================
+
+# Transcription (Whisper)
+# pip install openai-whisper
+
+# Embeddings & Vectorization
+# pip install sentence-transformers
+
+# LLM (Ollama for RAG)
+# pip install ollama

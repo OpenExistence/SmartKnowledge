@@ -23,3 +23,9 @@ Thumbs.db
 # Divers
 *.tmp
 *.sqlite
+
+# SmartKnowledge data (local only)
+backend/data/audio/
+backend/data/transcriptions/
+backend/data/db/
+!backend/data/db/.gitkeep
