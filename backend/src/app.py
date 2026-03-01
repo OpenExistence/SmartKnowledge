@@ -192,8 +192,8 @@ def register_routes(app):
     @app.route("/api/entretiens/<int:entretien_id>/transcrire", methods=["POST"])
     @login_required
     def transcrire_entretien(entretien_id):
-        """Transcribe an audio file using Whisper."""
-        from src.transcription.whisper_transcribe import transcribe_and_save, WHISPER_AVAILABLE
+        """Transcribe an audio file using Faster Whisper."""
+        from src.transcription.whisper_transcribe import transcribe_and_save, FASTER_WHISPER_AVAILABLE
 
         entretien = Entretien.query.filter_by(
             id=entretien_id,
@@ -206,9 +206,9 @@ def register_routes(app):
         if entretien.type_fichier != "audio":
             return jsonify({"error": "Not an audio file"}), 400
 
-        if not WHISPER_AVAILABLE:
+        if not FASTER_WHISPER_AVAILABLE:
             return jsonify({
-                "error": "Transcription requires whisper. Install: pip install openai-whisper"
+                "error": "Transcription requires faster-whisper. Install: pip install faster-whisper"
             }), 501
 
         # Run transcription

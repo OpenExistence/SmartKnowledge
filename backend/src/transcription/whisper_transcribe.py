@@ -1,49 +1,70 @@
-"""Transcription using Whisper."""
+"""Transcription using Faster Whisper."""
 import os
 import json
 from pathlib import Path
 
-# Note: This requires whisper to be installed
-# pip install openai-whisper
-
 try:
-    import whisper
-    WHISPER_AVAILABLE = True
+    from faster_whisper import WhisperModel
+    FASTER_WHISPER_AVAILABLE = True
 except ImportError:
-    WHISPER_AVAILABLE = False
-    print("Warning: whisper not installed. Run: pip install openai-whisper")
+    FASTER_WHISPER_AVAILABLE = False
+    print("Warning: faster-whisper not installed. Run: pip install faster-whisper")
 
 
-def transcribe_audio(audio_path: str, model_size: str = "base") -> dict:
+# Model sizes: tiny, base, small, medium, large-v2, large-v3
+DEFAULT_MODEL = "base"  # ~140MB
+
+
+def transcribe_audio(audio_path: str, model_size: str = DEFAULT_MODEL) -> dict:
     """
-    Transcribe an audio file using Whisper.
+    Transcribe an audio file using Faster Whisper.
     
     Args:
         audio_path: Path to the audio file
-        model_size: Whisper model size (tiny, base, small, medium, large)
+        model_size: Faster Whisper model size (tiny, base, small, medium, large-v2)
     
     Returns:
         dict with 'text', 'segments', and optional 'language'
     """
-    if not WHISPER_AVAILABLE:
+    if not FASTER_WHISPER_AVAILABLE:
         return {
-            "error": "Whisper not installed. Run: pip install openai-whisper"
+            "error": "faster-whisper not installed. Run: pip install faster-whisper"
         }
     
     if not os.path.exists(audio_path):
         return {"error": f"Audio file not found: {audio_path}"}
     
-    print(f"Loading Whisper model: {model_size}")
-    model = whisper.load_model(model_size)
+    print(f"Loading Faster Whisper model: {model_size}")
+    # Use CPU with int8 for faster processing
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
     
     print(f"Transcribing: {audio_path}")
-    result = model.transcribe(audio_path, language="fr")
+    segments, info = model.transcribe(
+        audio_path,
+        language="fr",
+        beam_size=5,
+        vad_filter=True  # Voice Activity Detection
+    )
+    
+    # Collect all segments
+    all_text = []
+    all_segments = []
+    
+    for segment in segments:
+        all_text.append(segment.text)
+        all_segments.append({
+            "start": segment.start,
+            "end": segment.end,
+            "text": segment.text
+        })
+    
+    full_text = " ".join(all_text)
     
     return {
-        "text": result["text"],
-        "segments": result.get("segments", []),
-        "language": result.get("language", "fr"),
-        "duration": result.get("duration", 0)
+        "text": full_text,
+        "segments": all_segments,
+        "language": info.language if info.language else "fr",
+        "duration": info.duration if info.duration else 0
     }
 
 
@@ -62,14 +83,14 @@ def save_transcription(transcription: dict, output_path: str):
     return output_path
 
 
-def transcribe_and_save(audio_path: str, output_dir: str, model_size: str = "base") -> dict:
+def transcribe_and_save(audio_path: str, output_dir: str, model_size: str = DEFAULT_MODEL) -> dict:
     """
     Transcribe audio and save to output directory.
     
     Args:
         audio_path: Source audio file
         output_dir: Directory to save transcription
-        model_size: Whisper model size
+        model_size: Faster Whisper model size
     
     Returns:
         dict with paths and transcription text
@@ -96,11 +117,13 @@ def transcribe_and_save(audio_path: str, output_dir: str, model_size: str = "bas
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python whisper_transcribe.py <audio_file> [output_dir]")
+        print("Usage: python whisper_transcribe.py <audio_file> [output_dir] [model]")
+        print("Models: tiny, base, small, medium, large-v2, large-v3")
         sys.exit(1)
     
     audio_file = sys.argv[1]
     output_dir = sys.argv[2] if len(sys.argv) > 2 else "transcriptions"
+    model_size = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_MODEL
     
-    result = transcribe_and_save(audio_file, output_dir)
+    result = transcribe_and_save(audio_file, output_dir, model_size)
     print(json.dumps(result, ensure_ascii=False, indent=2))
