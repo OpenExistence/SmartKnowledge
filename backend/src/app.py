@@ -123,11 +123,16 @@ def register_routes(app):
     def create_entretien():
         """Create a new entretien."""
         # Handle file upload or text data
-        expert_nom = request.form.get("expert_nom") or (request.json or {}).get("expert_nom")
-        expert_fonction = request.form.get("expert_fonction") or (request.json or {}).get("expert_fonction")
-        domaine = request.form.get("domaine") or (request.json or {}).get("domaine")
-        sensibilite = request.form.get("sensibilite") or (request.json or {}).get("sensibilite", "public")
-        metadata_json = request.form.get("metadata") or (request.json or {}).get("metadata")
+        # For multipart/form-data, request.json might be None
+        json_data = {}
+        if request.content_type and 'application/json' in request.content_type:
+            json_data = request.get_json(silent=True) or {}
+        
+        expert_nom = request.form.get("expert_nom") or json_data.get("expert_nom")
+        expert_fonction = request.form.get("expert_fonction") or json_data.get("expert_fonction")
+        domaine = request.form.get("domaine") or json_data.get("domaine")
+        sensibilite = request.form.get("sensibilite") or json_data.get("sensibilite", "public")
+        metadata_json = request.form.get("metadata") or json_data.get("metadata")
 
         if not expert_nom:
             return jsonify({"error": "expert_nom is required"}), 400
@@ -155,7 +160,7 @@ def register_routes(app):
             chemin_fichier = str(filepath)
 
         # Handle text transcription
-        transcription = request.form.get("transcription") or (request.json or {}).get("transcription")
+        transcription = request.form.get("transcription") or json_data.get("transcription")
         if transcription:
             type_fichier = "transcription"
             user_dir = config.TRANSCRIPTIONS_DIR / str(g.current_user.id)
@@ -232,7 +237,7 @@ def register_routes(app):
         # Run transcription
         try:
             output_dir = str(config.TRANSCRIPTIONS_DIR / str(g.current_user.id))
-            result = transcribe_and_save(enttien.chemin_fichier, output_dir)
+            result = transcribe_and_save(entretien.chemin_fichier, output_dir)
 
             if "error" in result:
                 return jsonify(result), 500

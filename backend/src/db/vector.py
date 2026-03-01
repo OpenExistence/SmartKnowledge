@@ -1,6 +1,7 @@
 """Vector database using ChromaDB."""
 import os
 import json
+from datetime import datetime, date
 from pathlib import Path
 
 # Note: Requires chromadb and sentence-transformers
@@ -78,15 +79,20 @@ class VectorStore:
         # Generate embeddings
         embeddings = self.embedding_model.encode(chunks).tolist()
         
-        # Prepare metadata
+        # Prepare metadata - convert all values to strings
         metadatas = []
         for i, chunk in enumerate(chunks):
-            meta = {
-                **metadata,
-                "entretien_id": str(entretien_id),
-                "chunk_index": i,
-                "chunk_text": chunk[:200]  # Truncate for storage
-            }
+            meta = {}
+            for key, value in metadata.items():
+                if value is None:
+                    meta[key] = ""
+                elif isinstance(value, (datetime, date)):
+                    meta[key] = value.isoformat()
+                else:
+                    meta[key] = str(value)
+            meta["entretien_id"] = str(entretien_id)
+            meta["chunk_index"] = i
+            meta["chunk_text"] = chunk[:200]  # Truncate for storage
             metadatas.append(meta)
         
         # Add to collection

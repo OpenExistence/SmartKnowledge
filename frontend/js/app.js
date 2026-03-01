@@ -433,8 +433,11 @@ async function transcrireEntretien(id) {
         if (data.error) {
             showToast(data.error, 'warning');
         } else {
-            showToast('Transcription en cours...', 'success');
-            loadEntretiens();
+            showToast('Transcription en cours... ⏳', 'info');
+            // Show processing state
+            document.getElementById('entretiens-list').querySelector(`[data-id="${id}"]`)?.classList.add('processing');
+            // Poll for completion
+            pollStatus(id, 'transcription', 2000);
         }
     } catch (error) {
         showToast(error.message, 'error');
@@ -447,12 +450,47 @@ async function vectoriserEntretien(id) {
         if (data.error) {
             showToast(data.error, 'warning');
         } else {
-            showToast('Vectorisation en cours...', 'success');
-            loadEntretiens();
+            showToast('Vectorisation en cours... ⏳', 'info');
+            // Show processing state
+            document.getElementById('entretiens-list').querySelector(`[data-id="${id}"]`)?.classList.add('processing');
+            // Poll for completion
+            pollStatus(id, 'vectorisation', 2000);
         }
     } catch (error) {
         showToast(error.message, 'error');
     }
+}
+
+async function pollStatus(id, type, interval) {
+    let attempts = 0;
+    const maxAttempts = 30; // Max 60 seconds
+    
+    const check = async () => {
+        attempts++;
+        try {
+            await loadEntretiens();
+            const entretien = window.entretiens?.find(e => e.id === id);
+            if (entretien) {
+                if (type === 'transcription' && entretien.statut_transcription) {
+                    showToast('Transcription terminée ! ✅', 'success');
+                    return;
+                }
+                if (type === 'vectorisation' && entretien.statut_vectorisation) {
+                    showToast('Vectorisation terminée ! ✅', 'success');
+                    return;
+                }
+            }
+            if (attempts < maxAttempts) {
+                setTimeout(check, interval);
+            } else {
+                showToast('Délai dépassé', 'warning');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+    
+    setTimeout(check, interval);
 }
 
 // Chat functions
