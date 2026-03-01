@@ -462,14 +462,26 @@ async function sendChatMessage() {
     const loadingId = addChatMessage('Recherche en cours...', 'assistant');
 
     try {
-        // TODO: Connect to actual RAG endpoint
-        // For now, show a placeholder
+        const data = await api.queryKnowledge(message);
+        
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) {
-            loadingEl.innerHTML = `
-                <p>Cette fonctionnalité nécessite l'API RAG (non encore implémentée).</p>
-                <p><em>Vous pouvez poser des questions une fois la vectorisation terminée.</em></p>
-            `;
+            if (data.error) {
+                loadingEl.innerHTML = `<p style="color: red;">Erreur: ${data.error}</p>`;
+            } else {
+                let html = `<p>${escapeHtml(data.answer)}</p>`;
+                
+                // Add sources if available
+                if (data.sources && data.sources.length > 0) {
+                    html += `<div class="sources"><strong>Sources:</strong><br>`;
+                    data.sources.forEach((s, i) => {
+                        html += `<em>${i + 1}. ${escapeHtml(s.expert)} (${escapeHtml(s.domaine)})</em><br>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                loadingEl.innerHTML = html;
+            }
         }
     } catch (error) {
         const loadingEl = document.getElementById(loadingId);

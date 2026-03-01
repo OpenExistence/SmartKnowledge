@@ -190,7 +190,9 @@ def register_routes(app):
     @app.route("/api/entretiens/<int:entretien_id>/transcrire", methods=["POST"])
     @login_required
     def transcrire_entretien(entretien_id):
-        """Transcribe an audio file (placeholder - requires whisper)."""
+        """Transcribe an audio file using Whisper."""
+        from src.transcription.whisper_transcribe import transcribe_and_save, WHISPER_AVAILABLE
+
         entretien = Entretien.query.filter_by(
             id=entretien_id,
             utilisateur_id=current_user.id
@@ -202,15 +204,40 @@ def register_routes(app):
         if entretien.type_fichier != "audio":
             return jsonify({"error": "Not an audio file"}), 400
 
-        # Placeholder - whisper not installed
-        return jsonify({
-            "error": "Transcription requires whisper. Install: pip install openai-whisper"
-        }), 501
+        if not WHISPER_AVAILABLE:
+            return jsonify({
+                "error": "Transcription requires whisper. Install: pip install openai-whisper"
+            }), 501
+
+        # Run transcription
+        try:
+            output_dir = str(config.TRANSCRIPTIONS_DIR / str(current_user.id))
+            result = transcribe_and_save(enttien.chemin_fichier, output_dir)
+
+            if "error" in result:
+                return jsonify(result), 500
+
+            # Update entretien
+            entretien.chemin_fichier = result["output_path"]
+            entretien.statut_transcription = 1
+            entretien.statut = "transcrit"
+            db.session.commit()
+
+            return jsonify({
+                "message": "Transcription completed",
+                "transcription": result["text"],
+                "path": result["output_path"]
+            })
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/api/entretiens/<int:entretien_id>/vectoriser", methods=["POST"])
     @login_required
     def vectoriser_entretien(entretien_id):
-        """Vectorize a transcription (placeholder - requires sentence-transformers)."""
+        """Vectorize a transcription."""
+        from src.db.vector import VectorStore, CHROMA_AVAILABLE, SENTENCE_TRANSFORMERS_AVAILABLE
+
         entretien = Entretien.query.filter_by(
             id=entretien_id,
             utilisateur_id=current_user.id
@@ -222,10 +249,88 @@ def register_routes(app):
         if not entretien.statut_transcription:
             return jsonify({"error": "Transcription not available"}), 400
 
-        # Placeholder - sentence-transformers not installed
-        return jsonify({
-            "error": "Vectorization requires sentence-transformers. Install: pip install sentence-transformers"
-        }), 501
+        if not CHROMA_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return jsonify({
+                "error": "Vectorization requires chromadb and sentence-transformers"
+            }), 501
+
+        try:
+            # Read transcription
+            with open(entretien.chemin_fichier, "r", encoding="utf-8") as f:
+                transcription_text = f.read()
+
+            # Initialize vector store
+            store = VectorStore(config.CHROMA_PATH)
+            store.get_or_create_collection()
+
+            # Add transcription
+            metadata = {
+                "expert_nom": entretien.expert_nom,
+                "expert_fonction": entretien.expert_fonction,
+                "domaine": entretien.domaine,
+                "utilisateur_id": str(entretien.utilisateur_id),
+                "sensibilite": entretien.sensibilite,
+                "date_entretien": entretien.date_entretien.isoformat() if entretien.date_entretien else None
+            }
+
+            result = store.add_transcription(
+                entretien_id=entretien.id,
+                transcription_text=transcription_text,
+                metadata=metadata
+            )
+
+            # Update entretien
+            entretien.statut_vectorisation = 1
+            entretien.statut = "vectorisé"
+            db.session.commit()
+
+            return jsonify({
+                "message": "Vectorization completed",
+                "chunks": result["chunks"]
+            })
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # RAG Query endpoint
+    @app.route("/api/query", methods=["POST"])
+    @login_required
+    def query_knowledge():
+        """Query the knowledge base."""
+        from src.db.vector import VectorStore, CHROMA_AVAILABLE, SENTENCE_TRANSFORMERS_AVAILABLE
+        from src.rag.query import RAGQuery, OLLAMA_AVAILABLE
+
+        data = request.get_json()
+        question = data.get("question")
+
+        if not question:
+            return jsonify({"error": "Question is required"}), 400
+
+        if not CHROMA_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return jsonify({
+                "error": "RAG requires chromadb and sentence-transformers"
+            }), 501
+
+        try:
+            # Initialize vector store
+            store = VectorStore(config.CHROMA_PATH)
+            store.get_or_create_collection()
+
+            # Create RAG query
+            rag = RAGQuery(store, config.OLLAMA_MODEL)
+
+            # Execute query
+            result = rag.query(
+                question=question,
+                user_id=current_user.id,
+                domaine=data.get("domaine"),
+                sensibilite_max=data.get("sensibilite_max", "tres_secret")
+            )
+
+            return jsonify(result)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 # Create app instance

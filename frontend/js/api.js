@@ -137,6 +137,17 @@ class ApiClient {
             method: 'POST'
         });
     }
+
+    async queryKnowledge(question, domaine = null, sensibiliteMax = "tres_secret") {
+        return this.request('/query', {
+            method: 'POST',
+            body: JSON.stringify({
+                question,
+                domaine,
+                sensibilite_max: sensibiliteMax
+            })
+        });
+    }
 }
 
 // Global API instance
