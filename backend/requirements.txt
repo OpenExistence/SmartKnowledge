@@ -1,23 +1,13 @@
 # SmartKnowledge - Dependencies
 
-## Installation
-# pip install --break-system-packages -r requirements.txt
-
 # Web Framework
 flask>=3.0.0
 flask-cors>=4.0.0
+flask-login>=0.6.0
+flask-sqlalchemy>=3.1.0
 
 # Database
 chromadb>=0.4.0
-
-# Transcription
-openai-whisper>=20231117
-
-# Embeddings
-sentence-transformers>=2.2.0
-
-# LLM (Ollama integration)
-ollama>=0.1.0
 
 # Audio processing
 pydub>=0.25.1
@@ -26,6 +16,7 @@ pydub>=0.25.1
 python-dotenv>=1.0.0
 numpy>=1.24.0
 
-# Flask extensions
-flask-login>=0.6.0
-flask-sqlalchemy>=3.1.0
+# LLM (optional - requires heavy dependencies)
+# ollama>=0.1.0
+# sentence-transformers>=2.2.0
+# openai-whisper>=20231117
