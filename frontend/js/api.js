@@ -148,6 +148,31 @@ class ApiClient {
             })
         });
     }
+
+    // User management (admin)
+    async getUsers() {
+        return this.request('/users');
+    }
+
+    async createUser(username, password, role = "user") {
+        return this.request('/users', {
+            method: 'POST',
+            body: JSON.stringify({ username, password, role })
+        });
+    }
+
+    async updateUser(userId, data) {
+        return this.request(`/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteUser(userId) {
+        return this.request(`/users/${userId}`, {
+            method: 'DELETE'
+        });
+    }
 }
 
 // Global API instance

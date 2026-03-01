@@ -117,6 +117,11 @@ function showDashboard() {
     dashboard.classList.add('active');
     userName.textContent = currentUser.username;
     loadEntretiens();
+    
+    // Show admin nav if admin
+    if (currentUser.role === 'admin') {
+        document.getElementById('admin-nav').style.display = 'block';
+    }
 }
 
 function showToast(message, type = 'success') {
@@ -142,6 +147,8 @@ function switchTab(tabId) {
     // Load data if needed
     if (tabId === 'manage') {
         loadEntretiens();
+    } else if (tabId === 'admin') {
+        loadUsers();
     }
 }
 
@@ -516,3 +523,75 @@ function formatDate(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleDateString('fr-FR');
 }
+
+// User management (admin)
+async function loadUsers() {
+    try {
+        const data = await api.getUsers();
+        if (data) {
+            renderUsers(data.users);
+        }
+    } catch (error) {
+        showToast('Erreur lors du chargement des utilisateurs', 'error');
+    }
+}
+
+function renderUsers(users) {
+    const container = document.getElementById('user-list');
+    
+    if (!users || !users.length) {
+        container.innerHTML = '<div class="empty-state"><h3>Aucun utilisateur</h3></div>';
+        return;
+    }
+
+    container.innerHTML = users.map(u => `
+        <div class="entretien-item" data-id="${u.id}">
+            <div class="entretien-info">
+                <h4>${escapeHtml(u.username)}</h4>
+                <p>Rôle: ${u.role} • Créé le: ${formatDate(u.created_at)}</p>
+            </div>
+            <div class="entretien-meta">
+                <span class="badge badge-${u.role === 'admin' ? 'tres_secret' : 'public'}">${u.role}</span>
+                <div class="entretien-actions">
+                    ${u.id !== currentUser.id ? `<button onclick="deleteUser(${u.id})" class="delete" title="Supprimer">🗑️</button>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) return;
+    
+    try {
+        await api.deleteUser(userId);
+        showToast('Utilisateur supprimé', 'success');
+        loadUsers();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+// Setup add user button
+document.addEventListener('DOMContentLoaded', () => {
+    const addUserBtn = document.getElementById('add-user-btn');
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', async () => {
+            const username = prompt('Nom d\'utilisateur:');
+            if (!username) return;
+            
+            const password = prompt('Mot de passe:');
+            if (!password) return;
+            
+            const role = prompt('Rôle (user/admin):', 'user');
+            
+            try {
+                await api.createUser(username, password, role);
+                showToast('Utilisateur créé', 'success');
+                loadUsers();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+    }
+});

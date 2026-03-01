@@ -44,6 +44,7 @@
                 <li><a href="#new" class="active" data-tab="new"><span>➕</span> <span>Nouvel Entretien</span></a></li>
                 <li><a href="#manage" data-tab="manage"><span>📁</span> <span>Mes Entretiens</span></a></li>
                 <li><a href="#chat" data-tab="chat"><span>💬</span> <span>Base de Connaissances</span></a></li>
+                <li><a href="#admin" data-tab="admin" id="admin-nav" style="display: none;"><span>⚙️</span> <span>Administration</span></a></li>
             </ul>
         </nav>
 
@@ -243,6 +244,19 @@
                             <input type="text" id="chat-input" placeholder="Tapez votre question...">
                             <button class="btn btn-primary" id="chat-send">Envoyer</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Admin -->
+            <div id="tab-admin" class="tab-content">
+                <div class="card">
+                    <h3>⚙️ Administration - Utilisateurs</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" id="add-user-btn">➕ Ajouter un utilisateur</button>
+                    </div>
+                    <div id="user-list" class="entretien-list">
+                        <div class="loading"><div class="spinner"></div></div>
                     </div>
                 </div>
             </div>

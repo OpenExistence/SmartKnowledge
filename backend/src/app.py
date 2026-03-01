@@ -10,6 +10,7 @@ import src.config as config
 from src.db.models import db, Utilisateur, Entretien
 from src.db import init_db
 from src.auth.auth import init_auth, authenticate_user, User
+from src.auth.users import register_user_routes
 
 
 def create_app():
@@ -30,6 +31,7 @@ def create_app():
 
     # Register routes
     register_routes(app)
+    register_user_routes(app)
 
     return app
 
