@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartKnowledge</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-box">
+            <h2>🔐 SmartKnowledge</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Identifiant</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-logo">
+                <h1>📚 SmartKnowledge</h1>
+            </div>
+            <div class="header-user">
+                <span id="user-name"></span>
+                <button id="logout-btn">Déconnexion</button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="#new" class="active" data-tab="new"><span>➕</span> <span>Nouvel Entretien</span></a></li>
+                <li><a href="#manage" data-tab="manage"><span>📁</span> <span>Mes Entretiens</span></a></li>
+                <li><a href="#chat" data-tab="chat"><span>💬</span> <span>Base de Connaissances</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tab: New Interview -->
+            <div id="tab-new" class="tab-content active">
+                <div class="tabs">
+                    <button class="tab active" data-subtab="record">🎙️ Enregistrement</button>
+                    <button class="tab" data-subtab="upload-audio">📤 Déposer Audio</button>
+                    <button class="tab" data-subtab="upload-text">📝 Déposer Transcription</button>
+                </div>
+
+                <!-- Record Tab -->
+                <div id="subtab-record" class="subtab-content active">
+                    <div class="card">
+                        <h3>🎙️ Nouvel Entretien - Enregistrement Live</h3>
+                        <div class="recorder">
+                            <div class="recorder-display" id="recorder-display">🎤</div>
+                            <div class="recorder-timer" id="recorder-timer">00:00:00</div>
+                            <div class="recorder-controls">
+                                <button class="btn btn-primary" id="start-record">Démarrer</button>
+                                <button class="btn btn-danger" id="stop-record" disabled>Arrêter</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" id="record-form-card" style="display: none;">
+                        <h3>Informations sur l'entretien</h3>
+                        <form id="record-form">
+                            <input type="hidden" id="record-filename">
+                            <div class="form-group">
+                                <label for="expert-nom">Nom de l'expert *</label>
+                                <input type="text" id="expert-nom" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expert-fonction">Fonction</label>
+                                <input type="text" id="expert-fonction">
+                            </div>
+                            <div class="form-group">
+                                <label for="domaine">Domaine</label>
+                                <select id="domaine">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="spatial">Spatial</option>
+                                    <option value="militaire">Militaire</option>
+                                    <option value="energie">Énergie</option>
+                                    <option value="informatique">Informatique</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sensibilite">Sensibilité</label>
+                                <select id="sensibilite">
+                                    <option value="public">Public</option>
+                                    <option value="interne">Interne</option>
+                                    <option value="confidentiel">Confidentiel</option>
+                                    <option value="secret">Secret</option>
+                                    <option value="tres_secret">Très Secret</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Upload Audio Tab -->
+                <div id="subtab-upload-audio" class="subtab-content">
+                    <div class="card">
+                        <h3>📤 Déposer un fichier audio</h3>
+                        <form id="upload-audio-form">
+                            <div class="form-group">
+                                <label>Fichier audio (MP3, WAV, M4A)</label>
+                                <div class="upload-area" id="audio-dropzone">
+                                    <p>Glissez-déposez un fichier ici<br>ou cliquez pour sélectionner</p>
+                                    <input type="file" id="audio-file" accept=".mp3,.wav,.m4a" style="display: none;">
+                                </div>
+                                <p id="audio-filename"></p>
+                            </div>
+                            <div class="form-group">
+                                <label for="audio-expert-nom">Nom de l'expert *</label>
+                                <input type="text" id="audio-expert-nom" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="audio-expert-fonction">Fonction</label>
+                                <input type="text" id="audio-expert-fonction">
+                            </div>
+                            <div class="form-group">
+                                <label for="audio-domaine">Domaine</label>
+                                <select id="audio-domaine">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="spatial">Spatial</option>
+                                    <option value="militaire">Militaire</option>
+                                    <option value="energie">Énergie</option>
+                                    <option value="informatique">Informatique</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="audio-sensibilite">Sensibilité</label>
+                                <select id="audio-sensibilite">
+                                    <option value="public">Public</option>
+                                    <option value="interne">Interne</option>
+                                    <option value="confidentiel">Confidentiel</option>
+                                    <option value="secret">Secret</option>
+                                    <option value="tres_secret">Très Secret</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Upload Text Tab -->
+                <div id="subtab-upload-text" class="subtab-content">
+                    <div class="card">
+                        <h3>📝 Déposer une transcription</h3>
+                        <form id="upload-text-form">
+                            <div class="form-group">
+                                <label for="text-transcription">Transcription (texte)</label>
+                                <textarea id="text-transcription" rows="10" placeholder="Collez la transcription ici..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="text-expert-nom">Nom de l'expert *</label>
+                                <input type="text" id="text-expert-nom" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="text-expert-fonction">Fonction</label>
+                                <input type="text" id="text-expert-fonction">
+                            </div>
+                            <div class="form-group">
+                                <label for="text-domaine">Domaine</label>
+                                <select id="text-domaine">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="spatial">Spatial</option>
+                                    <option value="militaire">Militaire</option>
+                                    <option value="energie">Énergie</option>
+                                    <option value="informatique">Informatique</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="text-sensibilite">Sensibilité</label>
+                                <select id="text-sensibilite">
+                                    <option value="public">Public</option>
+                                    <option value="interne">Interne</option>
+                                    <option value="confidentiel">Confidentiel</option>
+                                    <option value="secret">Secret</option>
+                                    <option value="tres_secret">Très Secret</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Manage Interviews -->
+            <div id="tab-manage" class="tab-content">
+                <div class="card">
+                    <h3>📁 Mes Entretiens</h3>
+                    <div class="filters" style="margin-bottom: 1rem;">
+                        <select id="filter-domaine" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">Tous les domaines</option>
+                            <option value="spatial">Spatial</option>
+                            <option value="militaire">Militaire</option>
+                            <option value="energie">Énergie</option>
+                            <option value="informatique">Informatique</option>
+                            <option value="finance">Finance</option>
+                        </select>
+                        <select id="filter-sensibilite" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">Toutes sensibilités</option>
+                            <option value="public">Public</option>
+                            <option value="interne">Interne</option>
+                            <option value="confidentiel">Confidentiel</option>
+                            <option value="secret">Secret</option>
+                        </select>
+                    </div>
+                    <div id="entretien-list" class="entretien-list">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Chat / Knowledge Base -->
+            <div id="tab-chat" class="tab-content">
+                <div class="card">
+                    <h3>💬 Base de Connaissances</h3>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="chat-message assistant">
+                                Bonjour ! Posez-moi une question sur les connaissances expertes capturées.
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chat-input" placeholder="Tapez votre question...">
+                            <button class="btn btn-primary" id="chat-send">Envoyer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
