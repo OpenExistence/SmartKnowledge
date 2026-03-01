@@ -53,10 +53,17 @@ read -r install_optional
 if [ "$install_optional" = "y" ] || [ "$install_optional" = "Y" ]; then
     echo "Installing Whisper, sentence-transformers, and ollama..."
     pip install openai-whisper sentence-transformers ollama
+    
+    # Install PyTorch CPU (lighter than GPU version)
+    echo "Installing PyTorch CPU..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+    
     echo -e "${GREEN}Optional dependencies installed!${NC}"
 else
     echo "Skipping optional dependencies."
-    echo "You can install them later with: pip install openai-whisper sentence-transformers ollama"
+    echo "You can install them later with:"
+    echo "  pip install sentence-transformers ollama"
+    echo "  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
 fi
 
 # Go back to project root

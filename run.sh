@@ -21,6 +21,9 @@ if [ ! -f "src/app.py" ]; then
     exit 1
 fi
 
+# Set PYTHONPATH
+export PYTHONPATH="$SCRIPT_DIR/backend"
+
 # Start the application
 echo "Starting SmartKnowledge..."
 cd src
