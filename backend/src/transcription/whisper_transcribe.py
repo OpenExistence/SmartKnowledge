@@ -12,7 +12,7 @@ except ImportError:
 
 
 # Model sizes: tiny, base, small, medium, large-v2, large-v3
-DEFAULT_MODEL = "base"  # ~140MB
+DEFAULT_MODEL = "small"  # ~490MB - better accuracy
 
 
 def transcribe_audio(audio_path: str, model_size: str = DEFAULT_MODEL) -> dict:
