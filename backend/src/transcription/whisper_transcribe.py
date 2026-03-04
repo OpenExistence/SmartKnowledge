@@ -35,15 +35,23 @@ def transcribe_audio(audio_path: str, model_size: str = DEFAULT_MODEL) -> dict:
         return {"error": f"Audio file not found: {audio_path}"}
     
     print(f"Loading Faster Whisper model: {model_size}")
-    # Use CPU with int8 for faster processing
+    # Use CPU with int8 for faster processing and lower memory
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
     
     print(f"Transcribing: {audio_path}")
+    # Get file size for logging
+    file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
+    print(f"Audio file size: {file_size_mb:.2f} MB")
+    
     segments, info = model.transcribe(
         audio_path,
         language="fr",
         beam_size=5,
-        vad_filter=True  # Voice Activity Detection
+        vad_filter=True,  # Voice Activity Detection
+        # Better settings for long audio
+        word_timestamps=False,  # Reduce memory for long files
+        condition_on_previous_text=True,
+        initial_prompt="Transcription d'entretien expert.",  # Help with context
     )
     
     # Collect all segments

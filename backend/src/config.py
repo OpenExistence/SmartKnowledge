@@ -25,7 +25,7 @@ FLASK_HOST = os.environ.get("FLASK_HOST", "0.0.0.0")
 FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
 
 # Upload settings
-MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB max
+MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB max for long recordings
 ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm"}
 ALLOWED_TEXT_EXTENSIONS = {".txt", ".md"}
 

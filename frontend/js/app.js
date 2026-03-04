@@ -167,22 +167,46 @@ function switchSubtab(tabElement, subtabId) {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        
+        // Use mimeType with support check
+        let mimeType = 'audio/webm;codecs=opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/webm';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'audio/mp4';
+            }
+        }
+        
+        const options = { mimeType };
+        mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
 
+        // Collect data every 30 seconds to prevent memory issues
         mediaRecorder.ondataavailable = (e) => {
-            audioChunks.push(e.data);
+            if (e.data && e.data.size > 0) {
+                audioChunks.push(e.data);
+            }
         };
 
         mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            // Create blob from all chunks
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
             const url = URL.createObjectURL(audioBlob);
             document.getElementById('record-filename').value = url;
             document.getElementById('record-form-card').style.display = 'block';
             stream.getTracks().forEach(track => track.stop());
+            
+            // Log size for debugging
+            console.log(`Recording saved: ${(audioBlob.size / 1024 / 1024).toFixed(2)} MB`);
         };
 
-        mediaRecorder.start();
+        mediaRecorder.onerror = (e) => {
+            console.error('MediaRecorder error:', e);
+            showToast('Erreur lors de l\'enregistrement', 'error');
+        };
+
+        // Start recording with timeslice of 30 seconds to flush chunks regularly
+        mediaRecorder.start(30000);
         recordingStartTime = Date.now();
 
         // Update UI
