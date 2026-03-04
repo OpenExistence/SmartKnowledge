@@ -619,16 +619,78 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    /* Hide sidebar by default on mobile */
     .sidebar {
-        width: 60px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 250px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        padding-top: 60px;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
     }
     
     .sidebar-nav a span {
-        display: none;
+        display: inline;
     }
     
     .main-content {
-        margin-left: 60px;
+        margin-left: 0;
+        padding-top: 60px;
+    }
+    
+    /* Mobile header with hamburger */
+    .mobile-header {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: #2c3e50;
+        align-items: center;
+        padding: 0 1rem;
+        z-index: 999;
+    }
+    
+    .hamburger {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        cursor: pointer;
+        padding: 10px;
+    }
+    
+    .hamburger span {
+        width: 25px;
+        height: 3px;
+        background: white;
+        border-radius: 2px;
+        transition: 0.3s;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .hamburger.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+    
+    .mobile-title {
+        color: white;
+        font-weight: 600;
+        margin-left: 1rem;
     }
     
     .entretien-item {
@@ -640,5 +702,26 @@ body {
     .entretien-meta {
         width: 100%;
         justify-content: space-between;
+    }
+    
+    /* Overlay for mobile sidebar */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+}
+
+/* Desktop: hide mobile elements */
+@media (min-width: 769px) {
+    .mobile-header,
+    .sidebar-overlay {
+        display: none !important;
     }
 }
