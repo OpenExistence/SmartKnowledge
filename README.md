@@ -149,6 +149,40 @@ Créer un nouvel admin :
 - **Frontend**: Vanilla JS, CSS (charte Atos)
 - **Audio**: Web Audio API, MediaRecorder
 
+## Branches Git
+
+Le projet utilise la structure suivante :
+- `main` : Branche stable
+- `feature/front-end-refactor` : Branche avec les améliorations du front-end
+- `origin/frontend` : Branche distante contenant les dernières modifications du front-end
+
+Pour basculer sur la branche avec les améliorations :
+```bash
+git checkout feature/front-end-refactor
+```
+
+## Historique des modifications
+
+### Front-end (v1.1.0)
+
+**Changements majeurs :**
+- Refonte complète du design avec une interface plus moderne
+- Amélioration de l'expérience utilisateur (UX)
+- Correction du système d'authentification par token
+- Ajout d'indicateurs de traitement pour la transcription et vectorisation
+- Migration vers Faster Whisper pour une transcription locale plus rapide
+- Optimisation de la gestion des fichiers audio
+
+**Améliorations ergonomiques :**
+- Interface plus réactive et fluide
+- Meilleure gestion des états de chargement
+- Notifications toast pour les actions utilisateur
+- Filtres améliorés pour la recherche d'entretiens
+
+**Corrections de bugs :**
+- Correction de l'authentification par token
+- Amélioration de la compatibilité avec différents navigateurs
+
 ## Dépannage
 
 ### "python3-venv not found"

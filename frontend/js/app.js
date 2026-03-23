@@ -41,38 +41,6 @@ function setupEventListeners() {
     loginForm.addEventListener('submit', handleLogin);
     logoutBtn.addEventListener('click', handleLogout);
 
-    // Mobile hamburger menu
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    
-    if (hamburger && sidebar) {
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('active');
-        });
-        
-        if (overlay) {
-            overlay.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            });
-        }
-        
-        // Close sidebar when clicking a link (mobile)
-        sidebar.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    hamburger.classList.remove('active');
-                    sidebar.classList.remove('open');
-                    if (overlay) overlay.classList.remove('active');
-                }
-            });
-        });
-    }
-    
     // Sidebar navigation
     document.querySelectorAll('.sidebar-nav a').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -199,46 +167,22 @@ function switchSubtab(tabElement, subtabId) {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        // Use mimeType with support check
-        let mimeType = 'audio/webm;codecs=opus';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-            mimeType = 'audio/webm';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'audio/mp4';
-            }
-        }
-        
-        const options = { mimeType };
-        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
 
-        // Collect data every 30 seconds to prevent memory issues
         mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                audioChunks.push(e.data);
-            }
+            audioChunks.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-            // Create blob from all chunks
-            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const url = URL.createObjectURL(audioBlob);
             document.getElementById('record-filename').value = url;
             document.getElementById('record-form-card').style.display = 'block';
             stream.getTracks().forEach(track => track.stop());
-            
-            // Log size for debugging
-            console.log(`Recording saved: ${(audioBlob.size / 1024 / 1024).toFixed(2)} MB`);
         };
 
-        mediaRecorder.onerror = (e) => {
-            console.error('MediaRecorder error:', e);
-            showToast('Erreur lors de l\'enregistrement', 'error');
-        };
-
-        // Start recording with timeslice of 30 seconds to flush chunks regularly
-        mediaRecorder.start(30000);
+        mediaRecorder.start();
         recordingStartTime = Date.now();
 
         // Update UI
