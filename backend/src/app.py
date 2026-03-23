@@ -45,13 +45,17 @@ def register_routes(app):
         """Health check."""
         return jsonify({"status": "ok"})
 
-    # Serve frontend static files
+    # Serve frontend static files (React build)
     @app.route("/")
     def serve_index():
-        return send_from_directory("../../frontend", "index.html")
+        return send_from_directory("../../frontend/dist", "index.html")
 
     @app.route("/<path:filename>")
     def serve_static(filename):
+        # Try frontend/dist first, then frontend for assets
+        dist_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend/dist", filename)
+        if os.path.exists(dist_path):
+            return send_from_directory("../../frontend/dist", filename)
         return send_from_directory("../../frontend", filename)
 
     # Auth routes
