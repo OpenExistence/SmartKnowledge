@@ -6,6 +6,7 @@ Outil de capture et valorisation des connaissances expertes pour préserver et d
 
 - 🎙️ **Enregistrement audio** d'entretiens
 - 📝 **Transcription** automatique avec Whisper
+- 📄 **Upload de fichiers** : .txt, .md, .pdf, .docx (conversion automatique en texte)
 - 🔍 **Vectorisation** pour recherche sémantique
 - 💬 **Chat RAG** pour interroger la base de connaissances
 - 🔐 **Authentification** par utilisateur
@@ -34,7 +35,8 @@ chmod +x setup.sh run.sh
 Le script `setup.sh` va :
 1. Créer un environnement virtuel Python (`backend/venv`)
 2. Installer les dépendances core (Flask, ChromaDB, etc.)
-3. Demander si tu veux installer les dépendances optionnelles (Whisper, Sentence Transformers) - nécessite ~2GB
+3. Installer les dépendances pour le parsing de fichiers (python-docx, PyPDF2)
+4. Demander si tu veux installer les dépendances optionnelles (Whisper, Sentence Transformers) - nécessite ~2GB
 
 ### Lancer l'application
 
@@ -122,6 +124,42 @@ Le compte `root` est admin. Il peut :
 Créer un nouvel admin :
 ```python
 # Via l'API ou directement en base
+```
+
+## Upload de fichiers
+
+### Formats supportés
+
+L'application supporte l'upload de plusieurs types de fichiers :
+
+| Type | Extensions | Traitement |
+|------|------------|------------|
+| Audio | .mp3, .wav, .m4a, .ogg, .flac, .webm | Sauvegardé directement |
+| Texte | .txt, .md | Parsing direct |
+| PDF | .pdf | Extraction de texte avec PyPDF2 |
+| Word | .docx | Extraction de texte avec python-docx |
+
+### Via l'interface
+
+1. Aller dans "Interviews" → "New Interview"
+2. Choisir "Text File" ou "Audio"
+3. Pour Text File : sélectionner un fichier ou coller du texte
+4. Pour Audio : sélectionner un fichier audio
+
+### Via l'API
+
+```bash
+# Upload fichier texte
+curl -X POST http://localhost:5000/api/entretiens \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "expert_nom=John Doe" \
+  -F "fichier=@document.pdf"
+
+# Upload transcription texte
+curl -X POST http://localhost:5000/api/entretiens \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"expert_nom": "John Doe", "transcription": "Texte de transcription..."}'
 ```
 
 ## API

@@ -151,21 +151,59 @@ def register_routes(app):
             filename = secure_filename(fichier.filename)
             ext = Path(filename).suffix.lower()
 
-            if ext not in config.ALLOWED_AUDIO_EXTENSIONS:
-                return jsonify({"error": "Invalid audio file type"}), 400
+            # Check if it's an audio file
+            if ext in config.ALLOWED_AUDIO_EXTENSIONS:
+                # Save audio file
+                user_dir = config.AUDIO_DIR / str(g.current_user.id)
+                user_dir.mkdir(parents=True, exist_ok=True)
+                filepath = user_dir / filename
+                fichier.save(filepath)
 
-            # Save file
-            user_dir = config.AUDIO_DIR / str(g.current_user.id)
-            user_dir.mkdir(parents=True, exist_ok=True)
-            filepath = user_dir / filename
-            fichier.save(filepath)
+                type_fichier = "audio"
+                chemin_fichier = str(filepath)
+            
+            # Check if it's a text file (txt, md, pdf, docx)
+            elif ext in config.ALLOWED_TEXT_EXTENSIONS:
+                from src.text_parser import TextParser
+                
+                # Save the uploaded file temporarily
+                user_dir = config.TRANSCRIPTIONS_DIR / str(g.current_user.id)
+                user_dir.mkdir(parents=True, exist_ok=True)
+                temp_filepath = user_dir / f"temp_{filename}"
+                fichier.save(temp_filepath)
+                
+                try:
+                    # Parse the file content
+                    text_content = TextParser.parse_file(str(temp_filepath))
+                    if text_content is None:
+                        return jsonify({"error": "Failed to parse file"}), 400
+                    
+                    # Save as .txt file
+                    filename_out = f"{expert_nom}_{len(list(user_dir.glob('*.txt')))}.txt"
+                    filepath = user_dir / filename_out
+                    filepath.write_text(text_content, encoding='utf-8')
+                    
+                    # Clean up temp file
+                    os.remove(temp_filepath)
+                    
+                    type_fichier = "transcription"
+                    chemin_fichier = str(filepath)
+                except ImportError as e:
+                    # Clean up temp file
+                    if os.path.exists(temp_filepath):
+                        os.remove(temp_filepath)
+                    return jsonify({"error": str(e)}), 400
+                except Exception as e:
+                    # Clean up temp file
+                    if os.path.exists(temp_filepath):
+                        os.remove(temp_filepath)
+                    return jsonify({"error": f"Error parsing file: {str(e)}"}), 400
+            else:
+                return jsonify({"error": "Invalid file type. Allowed: audio (mp3, wav, m4a, ogg, flac, webm) or text (txt, md, pdf, docx)"}), 400
 
-            type_fichier = "audio"
-            chemin_fichier = str(filepath)
-
-        # Handle text transcription
+        # Handle text transcription (direct text input)
         transcription = request.form.get("transcription") or json_data.get("transcription")
-        if transcription:
+        if transcription and not fichier:  # Only if no file uploaded
             type_fichier = "transcription"
             user_dir = config.TRANSCRIPTIONS_DIR / str(g.current_user.id)
             user_dir.mkdir(parents=True, exist_ok=True)

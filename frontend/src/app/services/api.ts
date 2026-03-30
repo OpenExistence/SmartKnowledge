@@ -95,7 +95,8 @@ class ApiService {
 
   // Entretiens
   async getEntretiens(): Promise<Entretien[]> {
-    return this.request<Entretien[]>('/api/entretiens');
+    const response = await this.request<{ entretiens: Entretien[] }>('/api/entretiens');
+    return response.entretiens;
   }
 
   async getEntretien(id: number): Promise<Entretien> {
