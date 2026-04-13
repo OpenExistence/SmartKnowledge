@@ -101,7 +101,8 @@ class ApiService {
   }
 
   async getEntretien(id: number): Promise<Entretien> {
-    return this.request<Entretien>(`/api/entretiens/${id}`);
+    const response = await this.request<{entretien: Entretien}>(`/api/entretiens/${id}`);
+    return response.entretien;
   }
 
   async createEntretien(data: Partial<Entretien>): Promise<Entretien> {
@@ -135,11 +136,11 @@ class ApiService {
     await this.request(`/api/entretiens/${id}`, { method: 'DELETE' });
   }
 
-  async transcrireEntretien(id: number): Promise<{ message: string }> {
+  async transcrireEntretien(id: number): Promise<{ message: string; transcription?: string }> {
     return this.request(`/api/entretiens/${id}/transcrire`, { method: 'POST' });
   }
 
-  async vectoriserEntretien(id: number): Promise<{ message: string }> {
+  async vectoriserEntretien(id: number): Promise<{ message: string; chunks?: number }> {
     return this.request(`/api/entretiens/${id}/vectoriser`, { method: 'POST' });
   }
 
