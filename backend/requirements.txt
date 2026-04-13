@@ -20,11 +20,16 @@ numpy>=1.24.0
 
 # ==================== OPTIONAL (for full features) ====================
 
-# Transcription (Whisper)
-# pip install openai-whisper
+# Transcription (Faster Whisper)
+faster-whisper>=1.0.0
 
 # Embeddings & Vectorization
-# pip install sentence-transformers
+sentence-transformers>=3.0.0
 
 # LLM (Ollama for RAG)
-# pip install ollama
+ollama>=0.1.0
+
+# PyTorch (CPU - lighter than GPU version)
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0

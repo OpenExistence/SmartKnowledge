@@ -40,30 +40,42 @@ echo "Upgrading pip..."
 pip install --upgrade pip
 
 # Install dependencies
-echo "Installing dependencies..."
+echo "Installing core dependencies..."
 pip install -r requirements.txt
 
-# Optional: Install heavy dependencies
+# Check what's actually installed
 echo ""
-echo -e "${YELLOW}Installing optional dependencies (Whisper, Sentence Transformers)?${NC}"
-echo "These are required for transcription and RAG features."
-echo "They are heavy (~2GB). Press y to install, any other key to skip: "
-read -r install_optional
+echo "Checking installed packages..."
 
-if [ "$install_optional" = "y" ] || [ "$install_optional" = "Y" ]; then
-    echo "Installing Whisper, sentence-transformers, and ollama..."
-    pip install faster-whisper sentence-transformers ollama
-    
-    # Install PyTorch CPU (lighter than GPU version)
-    echo "Installing PyTorch CPU..."
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-    
-    echo -e "${GREEN}Optional dependencies installed!${NC}"
+# Check for Ollama
+if command -v ollama &> /dev/null; then
+    echo -e "${GREEN}✓ Ollama CLI found${NC}"
+    echo "  To use RAG, make sure Ollama is running: ollama serve"
 else
-    echo "Skipping optional dependencies."
-    echo "You can install them later with:"
-    echo "  pip install faster-whisper sentence-transformers ollama"
-    echo "  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
+    echo -e "${YELLOW}⚠ Ollama CLI not found${NC}"
+    echo "  Install from: https://github.com/ollama/ollama"
+    echo "  Or: curl -fsSL https://ollama.ai/install.sh | sh"
+fi
+
+# Check for sentence-transformers
+if python3 -c "import sentence_transformers" 2>/dev/null; then
+    echo -e "${GREEN}✓ sentence-transformers installed${NC}"
+else
+    echo -e "${YELLOW}⚠ sentence-transformers not installed${NC}"
+fi
+
+# Check for faster-whisper
+if python3 -c "import faster_whisper" 2>/dev/null; then
+    echo -e "${GREEN}✓ faster-whisper installed${NC}"
+else
+    echo -e "${YELLOW}⚠ faster-whisper not installed${NC}"
+fi
+
+# Check for ollama Python package
+if python3 -c "import ollama" 2>/dev/null; then
+    echo -e "${GREEN}✓ ollama Python package installed${NC}"
+else
+    echo -e "${YELLOW}⚠ ollama Python package not installed${NC}"
 fi
 
 # Go back to project root
@@ -75,14 +87,32 @@ mkdir -p backend/data/audio
 mkdir -p backend/data/transcriptions
 mkdir -p backend/data/db/vectors
 
+# Build frontend
+if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+    echo ""
+    echo "Building frontend..."
+    cd frontend
+    
+    if [ ! -d "node_modules" ]; then
+        echo "Installing frontend dependencies..."
+        npm install
+    fi
+    
+    echo "Building frontend..."
+    npm run build
+    
+    echo -e "${GREEN}✓ Frontend built${NC}"
+    
+    cd ..
+fi
+
 echo ""
 echo -e "${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo "To start the application:"
 echo "  ./run.sh"
 echo ""
-echo "Or manually:"
-echo "  cd backend"
-echo "  source venv/bin/activate"
-echo "  cd src"
-echo "  python3 app.py"
+echo "Make sure Ollama is running if you want to use RAG:"
+echo "  ollama serve"
+echo "  ollama list  # to see available models"
+echo ""
