@@ -145,6 +145,7 @@ def register_routes(app):
         fichier = request.files.get("fichier")
         type_fichier = None
         chemin_fichier = None
+        contenu_texte = None
         duree_secondes = None
 
         if fichier:
@@ -183,6 +184,9 @@ def register_routes(app):
                     filepath = user_dir / filename_out
                     filepath.write_text(text_content, encoding='utf-8')
                     
+                    # Also store in database
+                    contenu_texte = text_content
+                    
                     # Clean up temp file
                     os.remove(temp_filepath)
                     
@@ -211,6 +215,7 @@ def register_routes(app):
             filepath = user_dir / filename
             filepath.write_text(transcription)
             chemin_fichier = str(filepath)
+            contenu_texte = transcription
 
         # Create entretien
         entretien = Entretien(
@@ -220,10 +225,11 @@ def register_routes(app):
             domaine=domaine,
             type_fichier=type_fichier,
             chemin_fichier=chemin_fichier,
+            contenu_texte=contenu_texte,
             duree_secondes=duree_secondes,
             sensibilite=sensibilite,
             statut_audio=1 if type_fichier == "audio" else 0,
-            statut_transcription=1 if type_fichier == "transcription" else 0,
+            statut_transcription=1 if type_fichier in ["transcription", "document"] else 0,
             metadata_json=str(metadata_json) if metadata_json else None,
             statut="en_attente"
         )
@@ -322,9 +328,14 @@ def register_routes(app):
             }), 501
 
         try:
-            # Read transcription
-            with open(entretien.chemin_fichier, "r", encoding="utf-8") as f:
-                transcription_text = f.read()
+            # Read transcription - first try DB, then file
+            transcription_text = entretien.contenu_texte
+            if not transcription_text and entretien.chemin_fichier and os.path.exists(entretien.chemin_fichier):
+                with open(entretien.chemin_fichier, "r", encoding="utf-8") as f:
+                    transcription_text = f.read()
+            
+            if not transcription_text:
+                return jsonify({"error": "No text content available"}), 400
 
             # Initialize vector store
             store = VectorStore(config.CHROMA_PATH)
@@ -346,7 +357,8 @@ def register_routes(app):
                 metadata=metadata
             )
 
-            # Update entretien
+            # Update entretien - save text to DB and mark as vectorized
+            entretien.contenu_texte = transcription_text
             entretien.statut_vectorisation = 1
             entretien.statut = "vectorisé"
             db.session.commit()

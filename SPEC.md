@@ -70,8 +70,9 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 | `expert_fonction` | TEXT | Fonction/titre de l'expert |
 | `domaine` | TEXT | Domaine (spatial, militaire, énergie, etc.) |
 | `date_entretien` | DATETIME | Date et heure de l'entretien |
-| `type_fichier` | TEXT | `audio` ou `transcription` |
-| `chemin_fichier` | TEXT | Chemin vers l'audio ou la transcription |
+| `type_fichier` | TEXT | `audio`, `transcription` ou `document` |
+| `chemin_fichier` | TEXT | Chemin vers le fichier (audio ou transcription) |
+| `contenu_texte` | TEXT | Contenu texte stocké directement en DB |
 | `duree_secondes` | INTEGER | Durée de l'enregistrement |
 | `sensibilite` | TEXT | Niveau de sensibilité (voir ci-dessous) |
 | `statut_audio` | INTEGER | 0 = non, 1 = oui |

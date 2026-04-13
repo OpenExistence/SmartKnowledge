@@ -20,6 +20,7 @@ interface Entretien {
   statut: string;
   fichier_audio?: string;
   transcription?: string;
+  contenu_texte?: string;
   created_at: string;
   user_id: number;
 }

@@ -15,6 +15,7 @@ interface Interview {
   created_at: string;
   type_fichier?: string;
   chemin_fichier?: string;
+  contenu_texte?: string;
   statut_audio: number;
   statut_transcription: number;
   statut_vectorisation: number;
@@ -44,10 +45,13 @@ export function InterviewDetail() {
       const data = await api.getEntretien(interviewId);
       setInterview(data);
       
-      // Load transcript if available
-      if (data.chemin_fichier && data.type_fichier === "transcription") {
-        // For now, we'll just use the path - in a real app we'd fetch the content
+      // Load transcript - prefer DB content, fallback to file path display
+      if (data.contenu_texte) {
+        setTranscript(data.contenu_texte);
+      } else if (data.chemin_fichier && data.type_fichier === "transcription") {
         setTranscript(`Transcription file: ${data.chemin_fichier}`);
+      } else {
+        setTranscript("");
       }
     } catch (err) {
       console.error("Failed to load interview:", err);

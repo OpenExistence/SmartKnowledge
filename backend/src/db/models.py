@@ -35,8 +35,9 @@ class Entretien(db.Model):
     expert_fonction = db.Column(db.String(200))
     domaine = db.Column(db.String(100))  # spatial, militaire, énergie, etc.
     date_entretien = db.Column(db.DateTime)
-    type_fichier = db.Column(db.String(20))  # audio or transcription
+    type_fichier = db.Column(db.String(20))  # audio, transcription, or document
     chemin_fichier = db.Column(db.String(500))
+    contenu_texte = db.Column(db.Text)  # Store text content directly in DB
     duree_secondes = db.Column(db.Integer)
     sensibilite = db.Column(db.String(20), default="public")  # public, interne, confidentiel, secret, tres_secret
     statut_audio = db.Column(db.Integer, default=0)  # 0 = no, 1 = yes
@@ -69,6 +70,7 @@ class Entretien(db.Model):
             "date_entretien": self.date_entretien.isoformat() if self.date_entretien else None,
             "type_fichier": self.type_fichier,
             "chemin_fichier": self.chemin_fichier,
+            "contenu_texte": self.contenu_texte,
             "duree_secondes": self.duree_secondes,
             "sensibilite": self.sensibilite,
             "statut_audio": bool(self.statut_audio),
