@@ -194,6 +194,7 @@ export function InterviewDetail() {
             variant="secondary" 
             onClick={handleTranscribe}
             disabled={processing !== null || interview.statut_transcription === 1 || interview.type_fichier !== "audio"}
+            title={interview.type_fichier !== "audio" ? "Only audio files can be transcribed" : ""}
           >
             {processing === "transcribing" ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -205,7 +206,8 @@ export function InterviewDetail() {
           <Button 
             variant="primary" 
             onClick={handleVectorize}
-            disabled={processing !== null || interview.statut_vectorisation === 1 || interview.statut_transcription !== 1}
+            disabled={processing !== null || interview.statut_vectorisation === 1}
+            title={!interview.statut_transcription && !interview.contenu_texte ? "No text content to vectorize" : ""}
           >
             {processing === "vectorizing" ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -281,7 +283,7 @@ export function InterviewDetail() {
               )}
             </CardHeader>
             <CardContent>
-              {interview.statut_transcription === 1 ? (
+              {(interview.statut_transcription === 1 || interview.contenu_texte) ? (
                 isEditing ? (
                   <textarea
                     value={transcript}
@@ -364,6 +366,7 @@ export function InterviewDetail() {
                 className="w-full justify-start"
                 onClick={handleTranscribe}
                 disabled={processing !== null || interview.statut_transcription === 1 || interview.type_fichier !== "audio"}
+                title={interview.type_fichier !== "audio" ? "Only audio files can be transcribed" : ""}
               >
                 <Mic className="w-5 h-5" />
                 Re-transcribe
@@ -372,7 +375,8 @@ export function InterviewDetail() {
                 variant="secondary" 
                 className="w-full justify-start"
                 onClick={handleVectorize}
-                disabled={processing !== null || interview.statut_vectorisation === 1 || interview.statut_transcription !== 1}
+                disabled={processing !== null || interview.statut_vectorisation === 1}
+                title={!interview.statut_transcription && !interview.contenu_texte ? "No text content to vectorize" : ""}
               >
                 <Search className="w-5 h-5" />
                 Re-vectorize
