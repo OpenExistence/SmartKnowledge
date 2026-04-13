@@ -104,10 +104,30 @@ class ApiService {
   }
 
   async createEntretien(data: Partial<Entretien>): Promise<Entretien> {
-    return this.request<Entretien>('/api/entretiens', {
+    const formData = new FormData();
+    
+    if (data.expert_nom) formData.append("expert_nom", data.expert_nom);
+    if (data.expert_fonction) formData.append("expert_fonction", data.expert_fonction);
+    if (data.domaine) formData.append("domaine", data.domaine);
+    if (data.sensibilite) formData.append("sensibilite", data.sensibilite);
+    if (data.transcription) formData.append("transcription", data.transcription);
+    
+    // Note: For file uploads, the caller should append the file directly to formData
+    
+    const response = await fetch(`${API_BASE_URL}/api/entretiens`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: formData,
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
   }
 
   async deleteEntretien(id: number): Promise<void> {
@@ -122,11 +142,15 @@ class ApiService {
     return this.request(`/api/entretiens/${id}/vectoriser`, { method: 'POST' });
   }
 
-  async queryKnowledgeBase(question: string): Promise<{ answer: string }> {
+  async queryKnowledgeBase(question: string, model?: string, domaine?: string, sensibilite_max?: string): Promise<{ answer: string; sources?: any[]; context_chunks?: number }> {
     return this.request('/api/query', {
       method: 'POST',
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, model, domaine, sensibilite_max }),
     });
+  }
+
+  async getAvailableModels(): Promise<{ default_model: string; available_models: string[] }> {
+    return this.request('/api/models');
   }
 
   // Users (admin)

@@ -127,6 +127,12 @@ Outil de capture et valorisation des connaissances expertes (spatial, militaire,
 - **Option légère** : `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions)
 - **Option performante** : `sentence-transformers/all-mpnet-base-v2` (768 dimensions)
 
+### Modèles LLM pour RAG
+
+- **Modèle par défaut** : `tinyllama` (léger, rapide)
+- **Autres modèles disponibles** : `llama2`, `mistral`, `mixtral`, `minimax-m2.5:cloud`, `phi`, `qwen2.5`
+- **Sélectionnable** via l'interface Knowledge Base
+
 ---
 
 ## Interface Web (Frontend)

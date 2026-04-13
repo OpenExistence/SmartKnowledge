@@ -369,6 +369,7 @@ def register_routes(app):
 
         data = request.get_json()
         question = data.get("question")
+        model = data.get("model", config.OLLAMA_MODEL)  # Allow model selection
 
         if not question:
             return jsonify({"error": "Question is required"}), 400
@@ -383,8 +384,8 @@ def register_routes(app):
             store = VectorStore(config.CHROMA_PATH)
             store.get_or_create_collection()
 
-            # Create RAG query
-            rag = RAGQuery(store, config.OLLAMA_MODEL)
+            # Create RAG query with selected model
+            rag = RAGQuery(store, model)
 
             # Execute query
             result = rag.query(
@@ -398,6 +399,16 @@ def register_routes(app):
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    # Get available LLM models
+    @app.route("/api/models", methods=["GET"])
+    @token_required
+    def list_models():
+        """List available LLM models."""
+        return jsonify({
+            "default_model": config.OLLAMA_MODEL,
+            "available_models": config.OLLAMA_AVAILABLE_MODELS
+        })
 
 
 # Create app instance

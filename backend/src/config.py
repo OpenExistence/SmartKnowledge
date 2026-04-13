@@ -34,4 +34,5 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Ollama (optional)
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "minimax-m2.5:cloud")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "tinyllama")
+OLLAMA_AVAILABLE_MODELS = ["tinyllama", "llama2", "mistral", "mixtral", "minimax-m2.5:cloud", "phi", "qwen2.5"]
